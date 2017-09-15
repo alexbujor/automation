@@ -14,7 +14,7 @@ public class AddEmployeePage {
 
     protected WebDriver driver;
 
-    @FindBy(id = "backText")
+    @FindBy(id = "back")
     protected WebElement backToEmployees;
 
     @FindBy(id = "submit")
@@ -128,6 +128,31 @@ public class AddEmployeePage {
     @FindBy(id = "start-date-test")
     private WebElement startDateHint;
 
+    public AddEmployeePage(WebDriver driver) {
+        this.driver = driver;
+        PageFactory.initElements(driver, this);
+    }
+
+    public ViewEmployeesPage pressAddEmployee() throws IOException, InterruptedException {
+        new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(addEmployee));
+        addEmployee.click();
+        Thread.sleep(2000);
+        return new ViewEmployeesPage(driver);
+    }
+
+    public void pressAddEmployeeWithNull() throws InterruptedException {
+        new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(addEmployee));
+        addEmployee.click();
+        Thread.sleep(2000);
+    }
+
+    public ViewEmployeesPage goToViewEmployees() throws IOException, InterruptedException {
+        new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(backToEmployees));
+        backToEmployees.click();
+        Thread.sleep(2000);
+        return new ViewEmployeesPage(driver);
+    }
+
     public boolean elementHasClasses(WebElement element, String active, String active2) {
         return element.getAttribute("class").contains(active)&&element.getAttribute("class").contains(active2);
     }
@@ -193,7 +218,7 @@ public class AddEmployeePage {
             return false;
         if (!elementHasClasses(headOfDisciplineHint,"has-error","has-feedback"))
             return false;
-        if (!elementHasClasses(startDateHint,"has-error","has-feedback"))
+        if (!elementHasClasses(startDateHint,"has-error",""))
             return false;
 
         return true;
@@ -210,11 +235,6 @@ public class AddEmployeePage {
         dropDown = new Select(elem);
         dropDown.selectByVisibleText(str);
         Thread.sleep(1000);
-    }
-
-    public AddEmployeePage(WebDriver driver) {
-        this.driver = driver;
-        PageFactory.initElements(driver, this);
     }
 
     public void fillGeneralInfo(String first_name, String last_name, String endava_email, String personal_email)
@@ -252,26 +272,6 @@ public class AddEmployeePage {
         Thread.sleep(1000);
         endDate.sendKeys(end_date);
         Thread.sleep(1000);
-    }
-
-    public ViewEmployeesPage pressAddEmployee() throws IOException, InterruptedException {
-        new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(addEmployee));
-        addEmployee.click();
-        Thread.sleep(2000);
-        return new ViewEmployeesPage(driver);
-    }
-
-    public void pressAddEmployeeWithNull() throws InterruptedException {
-        new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(addEmployee));
-        addEmployee.click();
-        Thread.sleep(2000);
-    }
-
-    public ViewEmployeesPage goToViewEmployees() throws IOException, InterruptedException {
-        new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(addEmployee));
-        backToEmployees.click();
-        Thread.sleep(2000);
-        return new ViewEmployeesPage(driver);
     }
 
     public boolean checkGeneralInfo() {
@@ -574,7 +574,7 @@ public class AddEmployeePage {
         if (!checkFieldDD(discipline,"")) return false;
         if (!checkFieldDD(jobGrade,"")) return false;
         if (!checkFieldDD(jobTitle,"")) return false;
-        if (!checkField(groups,"")) return false;
+        //if (!checkField(groups,"")) return false;
         if (!checkFieldDD(headOfDiscipline,"")) return false;
         //if (!checkField(buddy,"")) return false;
         if (!checkField(startDate,"")) return false;
@@ -582,7 +582,9 @@ public class AddEmployeePage {
         return true;
     }
 
-    public boolean isOpened() {
-        return "Add Employee".equals(driver.getTitle());
+    public String getStartDate(){
+        return startDate.getAttribute("value");
     }
+
+    public boolean isOpened() { return addEmployee.isDisplayed(); }
 }

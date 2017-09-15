@@ -17,8 +17,15 @@ import java.util.Properties;
 public class AdminHomePage {
 
     private WebDriver driver;
+
     @FindBy(id = "employeesBtn")
     private WebElement employees;
+
+    @FindBy(id = "documentsAdminBtn")
+    private WebElement documents;
+
+    @FindBy(className = "hello-admin")
+    private WebElement welcomeMsg;
 
     @FindBy(id = "homeBtn")
     private WebElement home;
@@ -35,11 +42,18 @@ public class AdminHomePage {
         return new ViewEmployeesPage(driver);
     }
 
+    public ViewDocumentsPage goToDocumentsPage() throws IOException, InterruptedException {
+        new WebDriverWait(driver, 10).until(ExpectedConditions.visibilityOf(documents));
+        documents.click();
+        Thread.sleep(2000);
+        return new ViewDocumentsPage(driver);
+    }
+
     public void goHome(){
         home.click();
     }
 
     public boolean isOpened() {
-        return "Admin Welcome".equals(driver.getTitle());
+        return welcomeMsg.isDisplayed();
     }
 }

@@ -1,6 +1,5 @@
 package com.endava.pages;
 
-import org.junit.Assert;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
@@ -16,79 +15,80 @@ public class ChangePasswordPage {
     private WebDriver driver;
     @FindBy(id = "password")
     private WebElement newPassword;
-    @FindBy(id = "Show password")
+    @FindBy(css = ".showBtn")
     private WebElement showPassword;
-    @FindBy(id = "Hide password")
+    @FindBy(css = ".hideBtn")
     private WebElement hidePassword;
-    @FindBy(id = "mesaj eroare")
+    @FindBy(id = "errorMessage")
     private WebElement errorMessage;
-    @FindBy(id = "hint")
+    @FindBy(css = ".shown-label.italic")
     private WebElement hintFormatPassword;
     @FindBy(id = "passwordConfirm")
     private WebElement confirmPassword;
     @FindBy(id = "submit")
     private WebElement btnChangePassword;
-    @FindBy(id = "Green sign validation ")
+    @FindBy(css = ".glyphicon.glyphicon-ok.form-control-feedback")
     private WebElement newPassGreenValidation;
-    @FindBy(id = "red X validation ")
-    private WebElement confirmPassRedValidation;
-    @FindBy(id = "red x validation ")
+    @FindBy(css = ".glyphicon.glyphicon-remove.form-control-feedback")
     private WebElement newPassRedValidation;
-    @FindBy(id = "Green sign validation")
+    @FindBy(css = ".glyphicon.glyphicon-remove.form-control-feedback")
+    private WebElement confirmPassRedValidation;
+    @FindBy(css = ".glyphicon.glyphicon-ok.form-control-feedback")
     private WebElement confirmPassGreenValidation;
 
 
     public ChangePasswordPage(WebDriver driver) {
         this.driver = driver;
         PageFactory.initElements(driver, this);
-        load();
     }
 
     //cazul in care user-ul isi schimba parola dupa prima logare
-
-    public void fillFormsChange(String newPass, String confirmPass){
-
+    public void fillFormsChange(String newPass, String confirmPass) throws InterruptedException {
+        newPassword.clear();
         newPassword.sendKeys(newPass);
+        Thread.sleep(1000);
 
+        confirmPassword.clear();
         confirmPassword.sendKeys(confirmPass);
+        Thread.sleep(1000);
     }
 
-    public void fillNewPassword(String newPass){
-
+    public void fillNewPassword(String newPass) throws InterruptedException {
+        newPassword.clear();
         newPassword.sendKeys(newPass);
+        Thread.sleep(1000);
     }
+    public void showPassword() throws InterruptedException {
+        showPassword.click();
+        Thread.sleep(1000);
+    }
+
+    public void hidePassword() throws InterruptedException {
+        hidePassword.click();
+        Thread.sleep(1000);
+    }
+
     //Change password with valid data
-    public LoginPage pressChangePasswordButton() {
+    public UserHomePage pressChangePasswordButton() throws InterruptedException {
         new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(btnChangePassword));
         btnChangePassword.click();
-        return new LoginPage(driver);
+        Thread.sleep(1000);
+        return new UserHomePage(driver);
+
+    }
+
+    public void pressChangePassBtn() throws InterruptedException {
+        new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(btnChangePassword));
+        btnChangePassword.click();
+        Thread.sleep(1000);
 
     }
 
     public boolean setErrorMessageWhenPassDontMatch(){
-
         if(! errorMessage.isDisplayed())
             return false;
 
         if(! confirmPassGreenValidation.isDisplayed())
-            return false;
-
-        if(! newPassGreenValidation.isDisplayed())
-            return false;
-
-
-        return true;
-        // Assert.assertTrue("Error message is displayed: '!Passwords don't match'",errorMessage.isDisplayed());
-        // Assert.assertTrue("Green sign is displayed for New password",newPassGreenValidation.isDisplayed());
-        //  Assert.assertTrue("Red X is displayed for Confirm Password",confirmPassRedValidation.isDisplayed());
-    }
-
-    public boolean setErrorMessageWhenDontFillMandatoryFields(){
-
-        if(! errorMessage.isDisplayed())
-            return false;
-
-        if(! confirmPassRedValidation.isDisplayed())
             return false;
 
         if(! newPassRedValidation.isDisplayed())
@@ -98,8 +98,20 @@ public class ChangePasswordPage {
         return true;
     }
 
-    public boolean hintFormatPassword(){
+    public boolean setErrorMessageWhenDontFillMandatoryFields(){
+        if(! errorMessage.isDisplayed())
+            return false;
 
+        if(! newPassRedValidation.isDisplayed())
+            return false;
+
+        if(! confirmPassRedValidation.isDisplayed())
+            return false;
+
+        return true;
+    }
+
+    public boolean hintFormatPassword(){
         if(! hintFormatPassword.isDisplayed())
             return false;
 
@@ -120,18 +132,9 @@ public class ChangePasswordPage {
 
         return true;
     }
+
     public boolean isOpened() {
-        return "Change password".equals(driver.getTitle());
+        return btnChangePassword.isDisplayed();
     }
-
-
-    protected void load() {
-        driver.get("http://localhost:4200/change-password");
-    }
-
-    protected void isLoaded() throws Error {
-        Assert.assertEquals("Change password", driver.getTitle());
-    }
-
 
 }

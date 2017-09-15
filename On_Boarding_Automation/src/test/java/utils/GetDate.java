@@ -46,8 +46,12 @@ public class GetDate {
         return true;
     }
 
+    /*public void numberOfDaysBetween() {
+        int days = Days.daysBetween(date1, date2).getDays();
+    }*/
+
     public static void main(String[] args) {
         GetDate getDate = new GetDate();
-        System.out.println(getDate.startIsDateGreaterThanToday("2017-09-04"));
+        System.out.println(getDate.startIsDateGreaterThanToday("2017-09-15"));
     }
 }

@@ -1,8 +1,10 @@
 package com.endava.pages;
 
 import org.junit.Assert;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -13,24 +15,18 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class EditEmployeePage extends AddEmployeePage{
-    @FindBy(id = "!!!!!!!!!!!!!!!!!!")
+    @FindBy(id = "editText")
     protected WebElement resetPassword;
 
-    @FindBy(id = "!!!!!!!!!!!!!!!!!!")
-    protected WebElement alert;
+    @FindBy(id = "yes-button")
+    protected WebElement alertYesButton;
 
     @FindBy(id = "submitedit")
     protected WebElement editEmployee;
 
-    public String resetPassword() throws InterruptedException {
-        resetPassword.click();
-        Thread.sleep(3000);
-        alert.click();
-        return personalEmail.getAttribute("value");
-    }
-
-    public String getStartDate(){
-        return startDate.getAttribute("value");
+    public EditEmployeePage(WebDriver driver) throws IOException {
+        super(driver);
+        PageFactory.initElements(driver, this);
     }
 
     public ViewEmployeesPage pressEditEmployee() throws IOException, InterruptedException {
@@ -47,10 +43,40 @@ public class EditEmployeePage extends AddEmployeePage{
     }
 
     public ViewEmployeesPage goToViewEmployees() throws IOException, InterruptedException {
-        new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(editEmployee));
+        new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(backToEmployees));
         backToEmployees.click();
         Thread.sleep(2000);
         return new ViewEmployeesPage(driver);
+    }
+
+    public void scrollIntoSaveChanges(){
+        Actions actions = new Actions(driver);
+        actions.moveToElement(editEmployee).perform();
+    }
+
+    public void scrollIntoResetPassword(){
+        Actions actions = new Actions(driver);
+        actions.moveToElement(resetPassword).perform();
+    }
+
+    public void scrollToResetPassword(){
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", resetPassword);
+    }
+
+    public String getPersonalEmail(){
+
+        return personalEmail.getAttribute("value");
+    }
+
+    public String getEndavaEmail(){
+
+        return endavaEmail.getAttribute("value");
+    }
+
+    public void resetPassword() throws InterruptedException {
+        resetPassword.click();
+        Thread.sleep(2000);
+        alertYesButton.click();
     }
 
     public boolean checkGeneralInfoChanges(String first_name, String last_name, String endava_email, String personal_email) {
@@ -93,19 +119,7 @@ public class EditEmployeePage extends AddEmployeePage{
         return true;
     }
 
-    public EditEmployeePage(WebDriver driver) throws IOException {
-        super(driver);
-        PageFactory.initElements(driver, this);
-    }
-
-    public ViewEmployeesPage goToViewEmployeesPage() throws IOException, InterruptedException {
-        new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(backToEmployees));
-        backToEmployees.click();
-        Thread.sleep(2000);
-        return new ViewEmployeesPage(driver);
-    }
-
     public boolean isOpened() {
-        return "Edit Employee".equals(driver.getTitle());
+        return editEmployee.isDisplayed();
     }
 }

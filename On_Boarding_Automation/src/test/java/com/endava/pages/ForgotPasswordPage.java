@@ -11,41 +11,39 @@ import org.openqa.selenium.support.PageFactory;
 public class ForgotPasswordPage {
 
     protected WebDriver driver;
-    @FindBy(id = "resetBtn")
+    @FindBy(id = "submit")
     private WebElement btn_resetPass;
 
-    @FindBy(id= "email")
+    @FindBy(id = "email")
     private WebElement txtbox_Email;
 
-    @FindBy(id= "errorMessageWrongEmail")
+    @FindBy(css = ".info-message")
     private WebElement errorMessageWrongEmail;
-
-    @FindBy(id= "redValidation")
-    private WebElement emailRedValidation;
 
     public ForgotPasswordPage(WebDriver driver) {
         this.driver = driver;
         PageFactory.initElements(driver, this);
     }
 
-    public void fillEmail(String sEmail){
-
+    public void fillEmail(String sEmail) {
         txtbox_Email.sendKeys(sEmail);
     }
 
-    public void resetPassword(){
-
+    public void resetPassword() {
         btn_resetPass.click();
     }
-    public boolean errorMessageForWrongEmail(){
-        if(! errorMessageWrongEmail.isDisplayed())
-            return false;
 
-        if(! emailRedValidation.isDisplayed())
+    public boolean errorMessageForWrongEmail() {
+        if (!errorMessageWrongEmail.isDisplayed())
             return false;
 
 
         return true;
 
     }
+
+    public boolean isOpened() {
+        return btn_resetPass.isDisplayed();
+    }
 }
+

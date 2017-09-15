@@ -7,12 +7,16 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import utils.GetDate;
 import utils.TextParser;
 
+import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -27,6 +31,8 @@ public class AddEmployeeTest {
     AdminHomePage adminHomePage;
     ViewEmployeesPage viewEmployeesPage;
     AddEmployeePage addEmployeePage;
+    ChangePasswordPage changePasswordPage;
+    UserHomePage userHomePage;
 
     @Before
     public void setup() throws IOException, InterruptedException {
@@ -43,7 +49,12 @@ public class AddEmployeeTest {
     }
 
     @After
-    public void tearDown(){
+    public void tearDown() throws InterruptedException {
+
+        loginPage = viewEmployeesPage.goToLoginPage();
+
+        Assert.assertTrue("'Login' is not opened", loginPage.isOpened());
+
         driver.manage().deleteAllCookies();
         driver.quit();
     }
@@ -54,39 +65,101 @@ public class AddEmployeeTest {
 
         loginPage = new LoginPage(driver).get();
 
-        Thread.sleep(2000);
-
         Assert.assertTrue("'Login' is not opened", loginPage.isOpened());
-
-        Thread.sleep(2000);
 
         loginPage.fillFormsLogin(adminEmail,adminPassword);
 
-        Thread.sleep(2000);
-
         adminHomePage = loginPage.pressLogInForAdmin();
-
-        Thread.sleep(2000);
 
         Assert.assertTrue("'Admin home' is not opened", adminHomePage.isOpened());
 
-        Thread.sleep(2000);
-
         viewEmployeesPage = adminHomePage.goToEmployees();
-
-        Thread.sleep(2000);
 
         Assert.assertTrue("'View employees' is not opened", viewEmployeesPage.isOpened());
 
-        Thread.sleep(2000);
-
         addEmployeePage = viewEmployeesPage.goToAddEmployee();
-
-        Thread.sleep(2000);
-
         Assert.assertTrue("Add Employee page is not opened",addEmployeePage.isOpened());
 
-        Thread.sleep(2000);
+    }
+
+    @Test
+    public void positiveFlowWithDatabaseAndEmailChecking() throws SQLException, InterruptedException, IOException, AWTException {
+
+        DBConnection dbConnection = new DBConnection();
+        EmailHelperA emailHelperA = new EmailHelperA();
+        TextParser textParser = new TextParser();
+        GetDate getDate = new GetDate();
+        String query;
+
+        String fn = "Alexandru";
+        String ln = "Bujor";
+        String ee = "Alexandru.Bujor@endava.com";
+        //String pe = "alexbujor94@gmail.com";
+        String pe = "testingemailautomation@gmail.com";
+        String passWord = "Testing1234";
+        String startDate = "09152017";
+        String newPassword = "Parola#123";
+
+        List<String> actual;
+        List<String> expected = new ArrayList<>(Arrays.asList(fn,ln,ee,pe));
+
+        Assert.assertTrue("General info fields are not visible",addEmployeePage.checkGeneralInfo());
+        Assert.assertTrue("Location fields are not visible",addEmployeePage.checkLocation());
+        Assert.assertTrue("Job details fields are not visible",addEmployeePage.checkJobDetails());
+
+        addEmployeePage.fillGeneralInfo(fn, ln, ee, pe);
+        addEmployeePage.fillLocation("Romania","Iasi","UBC Palas","4","1","5" );
+        addEmployeePage.fillJobDetails("ISD","Development","Intern","Developer",
+                "Java, .NET","Stefana Munteanu","Andreea Croitoru", startDate, "12152017");
+
+        String startDate2 = addEmployeePage.getStartDate();
+
+        viewEmployeesPage = addEmployeePage.pressAddEmployee();
+
+        Assert.assertTrue("View Employees page is not opened",viewEmployeesPage.isOpened());
+
+        /*query = "select distinct first_name, last_name, endava_email, personal_email from employees where first_name = '"
+                + fn + "' and last_name = '" + ln + "' and endava_email = '" + ee + "' and personal_email = '" + pe + "';";
+        actual = dbConnection.getUserInfo(query);
+        Assert.assertTrue("User not found in DB", actual.containsAll(expected));*/
+
+        if(getDate.startIsDateGreaterThanToday(startDate2) &&
+                textParser.stringExtractor(pe, "\\b[\\w.%+-]+@gmail.[a-zA-Z]{2,6}\\b")) {
+
+            //Open a new tab
+            Robot r = new Robot();
+            r.keyPress(KeyEvent.VK_CONTROL);
+            r.keyPress(KeyEvent.VK_T);
+            r.keyRelease(KeyEvent.VK_CONTROL);
+            r.keyRelease(KeyEvent.VK_T);
+
+            //Switch to the new tab
+            ArrayList<String> tabs = new ArrayList<> (driver.getWindowHandles());
+            driver.switchTo().window(tabs.get(1)); //switches to new tab
+
+            String receivedPassword = emailHelperA.getPasswordFromMail(pe, passWord, driver);
+
+            Assert.assertFalse("The email with credentials was not sent", receivedPassword.equalsIgnoreCase(""));
+
+            driver.close();
+            driver.switchTo().window(tabs.get(0));
+
+            loginPage = viewEmployeesPage.goToLoginPage();
+
+            Assert.assertTrue("'Login' is not opened", loginPage.isOpened());
+
+            loginPage.fillFormsLogin(ee,receivedPassword);
+
+            changePasswordPage = loginPage.pressLogInForFirstRegister();
+
+            Assert.assertTrue("'Login' is not opened", changePasswordPage.isOpened());
+
+            changePasswordPage.fillFormsChange(newPassword,newPassword);
+
+            userHomePage = changePasswordPage.pressChangePasswordButton();
+
+            Assert.assertTrue("The password is not changed and the User Home page is not opened",userHomePage.isOpened());
+        }
     }
 
     @Test
@@ -104,18 +177,20 @@ public class AddEmployeeTest {
         String fn = "Alexandru";
         String ln = "Bujor";
         String ee = "Alexandru.Bujor@endava.com";
-        String pe = "alexbujor94@gmail@gmail.com";
+        String pe = "alexbujor94@gmail.com";
 
         Assert.assertTrue("General info fields are not visible",addEmployeePage.checkGeneralInfo());
         Assert.assertTrue("Location fields are not visible",addEmployeePage.checkLocation());
         Assert.assertTrue("Job details fields are not visible",addEmployeePage.checkJobDetails());
 
-        Thread.sleep(2000);
 
         addEmployeePage.fillGeneralInfo(fn, ln, ee, pe);
         addEmployeePage.fillLocation("Romania","Iasi","UBC Palas","4","1","5" );
         addEmployeePage.fillJobDetails("ISD","Development","Intern","Developer",
                 "Java, .NET","Stefana Munteanu","Andreea Croitoru","04152017","09152017");
+
+        JavascriptExecutor jse = (JavascriptExecutor)driver;
+        jse.executeScript("window.scrollBy(0,-500)", "");
 
         Thread.sleep(2000);
 
@@ -124,8 +199,6 @@ public class AddEmployeeTest {
         Thread.sleep(2000);
 
         Assert.assertTrue("View Employees page is not opened",viewEmployeesPage.isOpened());
-
-        Thread.sleep(2000);
 
         addEmployeePage = viewEmployeesPage.goToAddEmployee();
 
@@ -138,48 +211,10 @@ public class AddEmployeeTest {
         Assert.assertTrue("Location fields from Add Employee are not default ",addEmployeePage.checkLocationDefault());
 
         Assert.assertTrue("Job details fields from Add Employee are not default ",addEmployeePage.checkJobDetailsDefault());
-    }
 
-    @Test
-    public void positiveFlowWithDatabaseAndEmailChecking() throws SQLException, InterruptedException, IOException {
-
-        DBConnection dbConnection = new DBConnection();
-        EmailHelperA emailHelperA = new EmailHelperA();
-        TextParser textParser = new TextParser();
-        String query;
-
-        String fn = "Alexandru";
-        String ln = "Bujor";
-        String ee = "Alexandru.Bujor@endava.com";
-        //String pe = "alexbujor94@gmail.com";
-        String pe = "testingemailautomation@gmail.com";
-        String passWord = "Testing1234";
-
-        List<String> actual = new ArrayList<>();
-        List<String> expected = new ArrayList<>(Arrays.asList(fn,ln,ee,pe));
-
-        Assert.assertTrue("General info fields are not visible",addEmployeePage.checkGeneralInfo());
-        Assert.assertTrue("Location fields are not visible",addEmployeePage.checkLocation());
-        Assert.assertTrue("Job details fields are not visible",addEmployeePage.checkJobDetails());
-
-        addEmployeePage.fillGeneralInfo(fn, ln, ee, pe);
-        addEmployeePage.fillLocation("Romania","Iasi","UBC Palas","4","1","5" );
-        addEmployeePage.fillJobDetails("ISD","Development","Intern","Developer",
-                "Java, .NET","Stefana Munteanu","Andreea Croitoru","04152017","09152017");
+        viewEmployeesPage = addEmployeePage.goToViewEmployees();
 
         Thread.sleep(2000);
-
-        viewEmployeesPage = addEmployeePage.pressAddEmployee();
-
-        Thread.sleep(2000);
-
-        Assert.assertTrue("View Employees page is not opened",viewEmployeesPage.isOpened());
-
-        query = "select distinct first_name, last_name, endava_email, personal_email from employees where first_name = '" + fn + "' and last_name = '" + ln + "' and endava_email = '" + ee + "' and personal_email = '" + pe + "';";
-        actual = dbConnection.getUserInfo(query);
-        Assert.assertTrue("User not found in DB", actual.containsAll(expected));
-        if(textParser.stringExtractor(pe,"\\b[\\w.%+-]+@gmail.[a-zA-Z]{2,6}\\b"))
-            Assert.assertTrue("The email with credentials was not sent", emailHelperA.checkMail(pe,passWord));
     }
 
     @Test
@@ -187,8 +222,6 @@ public class AddEmployeeTest {
         //Positive
 
         addEmployeePage.fillGeneralInfo("Alexandru","Bujor","Alexandru.Bujor@endava.com","alexbujor94@gmail.com");
-
-        Thread.sleep(2000);
 
         Assert.assertTrue("Endava email is badly checked when entering positive data",addEmployeePage.endavaEmailHasClasses("has-success","has-feedback"));
 
@@ -198,8 +231,6 @@ public class AddEmployeeTest {
         //Negative
 
         addEmployeePage.fillGeneralInfo("Alexandru","Bujor","Alexandru.Bujor@endavacom","alexbujor94gmail.com");
-
-        Thread.sleep(2000);
 
         Assert.assertTrue("Endava email is badly checked when entering negative data",addEmployeePage.endavaEmailHasClasses("has-error","has-feedback"));
 
@@ -213,58 +244,53 @@ public class AddEmployeeTest {
         String office = "UBC Palas";
         String floor_nr = "4";
 
-        Assert.assertTrue("The City field is disabled when selecting a new country",addEmployeePage.validateCountryField(country));
-        Assert.assertTrue("The Office, Floor nr., Business unit and Head of discipline fields are enabled when selecting a new country",addEmployeePage.validateCountryField2(country));
+        Assert.assertTrue("The City field is disabled when selecting a new country",addEmployeePage.validateCountryField("Columbia"));
+        Assert.assertTrue("The Office, Floor nr., Business unit and Head of discipline fields are enabled when selecting a new country",
+                addEmployeePage.validateCountryField2("Columbia"));
 
-        Assert.assertTrue("The Office field is disabled when selecting a new city",addEmployeePage.validateCityField(country, city));
-        Assert.assertTrue("The Floor nr., Business unit and Head of discipline fields are enabled when selecting a new city",addEmployeePage.validateCityField2(country, city));
+        Assert.assertTrue("The Office field is disabled when selecting a new city",addEmployeePage.validateCityField("Columbia", "Bogota"));
+        Assert.assertTrue("The Floor nr., Business unit and Head of discipline fields are enabled when selecting a new city",
+                addEmployeePage.validateCityField2(country, city));
 
-        Assert.assertTrue("The Floor nr. field is disabled when selecting a new office",addEmployeePage.validateOfficeField(country, city, office));
-        Assert.assertTrue("The Business unit and Head of discipline fields are enabled when selecting a new office",addEmployeePage.validateOfficeField2(country, city, office));
+        Assert.assertTrue("The Floor nr. field is disabled when selecting a new office",addEmployeePage.validateOfficeField("Columbia", "Bogota",
+                "Office7"));Assert.assertTrue("The Business unit and Head of discipline fields are enabled when selecting a new office",
+                addEmployeePage.validateOfficeField2("Columbia", "Bogota", "Office7"));
 
 
         //Positive test
 
         addEmployeePage.fillLocation(country, city, office,floor_nr,"100", "5");
 
-        Thread.sleep(2000);
+        Assert.assertFalse("Table nr. is badly checked when entering positive data", addEmployeePage.tableNrHasClasses("has-error","has-feedback"));
 
-        Assert.assertTrue("Table nr. is badly checked when entering positive data", addEmployeePage.tableNrHasClasses("has-success","has-feedback"));
-
-        Assert.assertTrue("Chair nr. is badly checked when entering positive data", addEmployeePage.chairNrHasClasses("has-success","has-feedback"));
+        Assert.assertFalse("Chair nr. is badly checked when entering positive data", addEmployeePage.chairNrHasClasses("has-error","has-feedback"));
 
 
         //Negative test
 
         addEmployeePage.fillLocation(country, city, office,floor_nr,"101", "6");
 
-        Thread.sleep(2000);
+        Assert.assertTrue("Table nr. is badly checked when entering negative data", addEmployeePage.tableNrHasClasses("has-error","has-feedback"));
 
-        Assert.assertEquals("Table nr. is badly checked when entering negative data", addEmployeePage.tableNrHasClasses("has-error","has-feedback"));
-
-        Assert.assertEquals("Chair nr. is badly checked when entering negative data", addEmployeePage.chairNrHasClasses("has-error","has-feedback"));
+        Assert.assertTrue("Chair nr. is badly checked when entering negative data", addEmployeePage.chairNrHasClasses("has-error","has-feedback"));
 
 
         //Negative test
 
         addEmployeePage.fillLocation(country, city, office,floor_nr,"0", "0");
 
-        Thread.sleep(2000);
+        Assert.assertTrue("Table nr. is badly checked when entering negative data", addEmployeePage.tableNrHasClasses("has-error","has-feedback"));
 
-        Assert.assertEquals("Table nr. is badly checked when entering negative data", addEmployeePage.tableNrHasClasses("has-error","has-feedback"));
-
-        Assert.assertEquals("Chair nr. is badly checked when entering negative data", addEmployeePage.chairNrHasClasses("has-error","has-feedback"));
+        Assert.assertTrue("Chair nr. is badly checked when entering negative data", addEmployeePage.chairNrHasClasses("has-error","has-feedback"));
 
 
         //Negative test
 
         addEmployeePage.fillLocation(country, city, office,floor_nr,"-1", "-1");
 
-        Thread.sleep(2000);
+        Assert.assertTrue("Table nr. is badly checked when entering negative data", addEmployeePage.tableNrHasClasses("has-error","has-feedback"));
 
-        Assert.assertEquals("Table nr. is badly checked when entering negative data", addEmployeePage.tableNrHasClasses("has-error","has-feedback"));
-
-        Assert.assertEquals("Chair nr. is badly checked when entering negative data", addEmployeePage.chairNrHasClasses("has-error","has-feedback"));
+        Assert.assertTrue("Chair nr. is badly checked when entering negative data", addEmployeePage.chairNrHasClasses("has-error","has-feedback"));
     }
 
     @Test
@@ -275,28 +301,25 @@ public class AddEmployeeTest {
         String business_unit = "ISD";
         String discipline = "Development";
 
-        Thread.sleep(2000);
-
         Assert.assertTrue("The Head of discipline field is disabled when selecting a new Business unit and Discipline is selected",
-                addEmployeePage.validateBusinessUnitField(country, city, office, business_unit));
+                addEmployeePage.validateBusinessUnitField("Columbia", "Bogota", "Office7", "BOD"));
         Assert.assertTrue("The Head of discipline field is enabled when selecting a new Business unit and Discipline is not selected",
-                addEmployeePage.validateBusinessUnitField2(country, city, office, business_unit));
+                addEmployeePage.validateBusinessUnitField2("Columbia", "Bogota", "Office7", "BOD"));
 
         Assert.assertTrue("The Head of discipline field is disabled when selecting a new Discipline and Business unit is selected",
-                addEmployeePage.validateDisciplineField(country, city, office, discipline));
+                addEmployeePage.validateDisciplineField("Columbia", "Bogota", "Office7", discipline));
         Assert.assertTrue("The Head of discipline field is enabled when selecting a new Discipline and Business unit is not selected",
-                addEmployeePage.validateDisciplineField2(country, city, office, discipline));
+                addEmployeePage.validateDisciplineField2("Columbia", "Bogota", "Office7", discipline));
         Assert.assertTrue("The Job title field is disabled when selecting a new Discipline",
-                addEmployeePage.validateDisciplineField3(country, city, office, discipline));
+                addEmployeePage.validateDisciplineField3("Columbia", "Bogota", "Office7", discipline));
 
 
         //Positive test
+        addEmployeePage.fillLocation(country,city,office,"1","1","1");
         addEmployeePage.fillJobDetails("ISD","Development","Intern","Developer",
                 "Java, .NET","Stefana Munteanu","Andreea Croitoru","04152017","09152017");
 
-        Thread.sleep(2000);
-
-        Assert.assertEquals("End date is badly checked when entering positive data", addEmployeePage.endDateHasClasses("has-success","has-feedback"));
+        Assert.assertFalse("End date is badly checked when entering positive data", addEmployeePage.endDateHasClasses("has-error","has-feedback"));
     }
 
     @Test
@@ -305,17 +328,13 @@ public class AddEmployeeTest {
         String city = "Iasi";
         String office = "UBC Palas";
 
-        Thread.sleep(2000);
-
         addEmployeePage.fillLocation(country,city,office,"1","1","1");
 
         //Negative test
         addEmployeePage.fillJobDetails("ISD","Development","Intern","Developer",
                 "Java, .NET","Stefana Munteanu","Andreea Croitoru","04152017","04142017");
 
-        Thread.sleep(2000);
-
-        Assert.assertEquals("End date is badly checked when entering positive data", addEmployeePage.endDateHasClasses("has-error","has-feedback"));
+        Assert.assertTrue("End date is badly checked when entering positive data", addEmployeePage.endDateHasClasses("has-error",""));
     }
 
     @Test
@@ -341,11 +360,11 @@ public class AddEmployeeTest {
         Assert.assertTrue("Office drop-down values are not correct", actual.containsAll(Arrays.asList("UBC Palas", "Office1", "Office2", "Office3", "Office4", "Office5", "Office6", "Office7")));
         actual.clear();
 
-        query = "select distinct business_unit from job_details;";
+        /*query = "select distinct business_unit from job_details;";
         column = "business_unit";
         actual = dbConnection.getDbInfo(query, column);
         Assert.assertTrue("Business unit drop-down values are not correct", actual.containsAll(Arrays.asList("ISD", "CLD", "BHD", "MDD", "BGD", "SKD", "SFD", "BOD")));
-        actual.clear();
+        actual.clear();*/
 
         query = "select distinct discipline from job_details;";
         column = "discipline";
@@ -401,7 +420,7 @@ public class AddEmployeeTest {
         Assert.assertTrue("Job grades drop-down values are not correct", actual.containsAll(Arrays.asList("Director","Business Director","Business Manager","Senior Manager","Manager","Senior Consultant","Consultant","Senior Engineer","Engineer","Senior Technician","Technician","Junior Technician","Intern")));
         actual.clear();
 
-        query = "select concat(first_name, concat(' ', last_name)) from employees e, job_details j where e.job_details_id=j.job_details_id and j.job_title like '%Head of' and j.business_unit = 'ISD';";
+        /*query = "select concat(first_name, concat(' ', last_name)) from employees e, job_details j where e.job_details_id=j.job_details_id and j.job_title like '%Head of' and j.business_unit = 'ISD';";
         column = "concat";
         actual = dbConnection.getDbInfo(query, column);
         Assert.assertTrue("Head of discipline for ISD business unit drop-down values are not correct", actual.containsAll(Arrays.asList("Bogdan Buhaceanu","Alexandru Moise","Adrian Miron","Stefana Munteanu","Bogdan Darabaneanu","Bogdan Buhaceanu")));
@@ -447,7 +466,6 @@ public class AddEmployeeTest {
         column = "concat";
         actual = dbConnection.getDbInfo(query, column);
         Assert.assertTrue("Head of discipline for BOD business unit drop-down values are not correct", actual.containsAll(Arrays.asList("Mirtha Maharaj","Hee Auger","Rolanda Kolstad","Ardelia Danielson","Fumiko Moy","Teddy Bhakta")));
-        actual.clear();
-
+        actual.clear();*/
     }
 }

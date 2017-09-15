@@ -21,6 +21,9 @@ import java.util.Properties;
 public class ViewEmployeesPage {
     private WebDriver driver;
 
+    @FindBy(id = "logoutIcon")
+    private WebElement logout;
+
     @FindBy(id = "addEmployee")
     private WebElement addEmployee;
 
@@ -62,6 +65,11 @@ public class ViewEmployeesPage {
 
     @FindBy(id = "yes-button")
     private WebElement alert;
+
+    public  boolean logoutIsVisible(){
+        if(logout.isDisplayed()) return true;
+        return false;
+    }
 
     public void complete(WebElement elem, String str) throws InterruptedException {
         elem.clear();
@@ -118,10 +126,11 @@ public class ViewEmployeesPage {
             btnForward.click();
             getElemsFromGridIntoList(actual);
         }
-        System.out.println("Actual" + " " + actual);
-        System.out.println("Expected" + " " + expected);
-        if(!actual.equals(expected)) return false;
-        return true;
+
+        Collections.sort(actual);
+        Collections.sort(expected);
+
+        return actual.equals(expected);
     }
 
     public boolean verifyDropDownsFunctionality(String string_discipline, String string_jobgrade) throws SQLException, InterruptedException {
@@ -142,10 +151,11 @@ public class ViewEmployeesPage {
             btnForward.click();
             getElemsFromGridIntoList(actual);
         }
-        System.out.println("Actual" + " " + actual);
-        System.out.println("Expected" + " " + expected);
-        if(!actual.equals(expected)) return false;
-        return true;
+
+        Collections.sort(actual);
+        Collections.sort(expected);
+
+        return actual.equals(expected);
     }
 
     public boolean validateAscending(String listingNumber) throws InterruptedException, SQLException {
@@ -153,7 +163,7 @@ public class ViewEmployeesPage {
         List<String> expected;
         DBConnection dbConnection = new DBConnection();
 
-        String query = "select concat(first_name, concat(' ', last_name)) from employees order by concat(first_name, last_name) asc limit " + listingNumber + ";";
+        String query = "select concat(first_name, concat(' ', last_name)) from employees where archived = false order by concat(first_name, last_name) asc limit " + listingNumber + ";";
         String column = "concat";
         expected = dbConnection.getDbInfo(query, column);
 
@@ -161,11 +171,10 @@ public class ViewEmployeesPage {
 
         actual = getElemsFromGrid(btnSortAsc,listingNumber);
 
-        System.out.println(actual);
-        System.out.println(expected);
+        Collections.sort(actual);
+        Collections.sort(expected);
 
-        if(!actual.equals(expected)) return false;
-        return true;
+        return actual.equals(expected);
     }
 
     public boolean validateDescending(String listingNumber) throws InterruptedException, SQLException {
@@ -173,7 +182,7 @@ public class ViewEmployeesPage {
         List<String> expected;
         DBConnection dbConnection = new DBConnection();
 
-        String query = "select concat(first_name, concat(' ', last_name)) from employees order by concat(first_name, last_name) desc limit " + listingNumber + ";";
+        String query = "select concat(first_name, concat(' ', last_name)) from employees where archived = false order by concat(first_name, last_name) desc limit " + listingNumber + ";";
         String column = "concat";
         expected = dbConnection.getDbInfo(query, column);
 
@@ -181,11 +190,10 @@ public class ViewEmployeesPage {
 
         actual = getElemsFromGrid(btnSortDesc,listingNumber);
 
-        System.out.println(actual);
-        System.out.println(expected);
+        Collections.sort(actual);
+        Collections.sort(expected);
 
-        if(!actual.equals(expected)) return false;
-        return true;
+        return actual.equals(expected);
     }
 
     public boolean checkListings(String listingNumber) throws InterruptedException {
@@ -209,6 +217,13 @@ public class ViewEmployeesPage {
         return new AddEmployeePage(driver);
     }
 
+    public LoginPage goToLoginPage() throws InterruptedException {
+        new WebDriverWait(driver, 10).until(ExpectedConditions.visibilityOf(logout));
+        logout.click();
+        Thread.sleep(2000);
+        return new LoginPage(driver);
+    }
+
     public EditEmployeePage goToEditEmployee() throws IOException, InterruptedException {
         new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(btnEdit));
         btnEdit.click();
@@ -230,6 +245,6 @@ public class ViewEmployeesPage {
     }
 
     public boolean isOpened() {
-        return "Employees".equals(driver.getTitle());
+        return btnEdit.isDisplayed();
     }
 }

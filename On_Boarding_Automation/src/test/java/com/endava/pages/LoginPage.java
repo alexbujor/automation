@@ -9,7 +9,9 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.LoadableComponent;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Properties;
 
 /**
  * Created by acotet on 8/22/2017.
@@ -49,6 +51,10 @@ public class LoginPage extends LoadableComponent<LoginPage> {
 
     private WebElement expiredCredentials;
 
+    @FindBy(css = ".right-forget")
+
+    private WebElement linkResetPassword;
+
 // This is a constructor, as every page need a base driver to find web elements
 
     public LoginPage(WebDriver driver) {
@@ -60,13 +66,17 @@ public class LoginPage extends LoadableComponent<LoginPage> {
     //cazul in care user-ul se logheaza cu contul de admin
 
     public void fillFormsLogin(String sEmail, String sPassword) throws InterruptedException {
-
+        txtbox_Email.clear();
         txtbox_Email.sendKeys(sEmail);
         Thread.sleep(1000);
+
+        txtbox_Password.clear();
         txtbox_Password.sendKeys(sPassword);
         Thread.sleep(1000);
 
     }
+
+
 
 
     //dupa ce se logheaza cu contul de admin este redirectionat catre pagina de AdminHomePage
@@ -80,8 +90,15 @@ public class LoginPage extends LoadableComponent<LoginPage> {
     public void pressLogInButton() throws InterruptedException {
         new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(btn_Login));
         btn_Login.click();
-        Thread.sleep(5000);
+        Thread.sleep(1000);
 
+    }
+
+    public ForgotPasswordPage goToResetPasswordPage() throws InterruptedException {
+        new WebDriverWait(driver, 5).until(ExpectedConditions.visibilityOf(linkResetPassword));
+        linkResetPassword.click();
+        Thread.sleep(1000);
+        return new ForgotPasswordPage(driver);
     }
     public boolean errorMessageInvalidLoginForAdmin() {
 
@@ -104,10 +121,6 @@ public class LoginPage extends LoadableComponent<LoginPage> {
         btn_Login.click();
         Thread.sleep(1000);
         return new UserHomePage(driver);
-    }
-
-    public boolean isOpened() {
-        return "Log in".equals(driver.getTitle());
     }
 
     public boolean setErrorMessage(){
@@ -162,11 +175,20 @@ public class LoginPage extends LoadableComponent<LoginPage> {
 
     }
 
-    protected void load() {
-        driver.get("http://localhost:4200/");
+    public boolean isOpened() {
+        return btn_Login.isDisplayed();
     }
 
-    protected void isLoaded() throws Error {
-        Assert.assertEquals("Log in", driver.getTitle());
+    protected void load() {
+        Properties properties = new Properties();
+        try {
+            properties.load(new FileInputStream("src\\test\\resources\\defaultConfig.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String url = properties.getProperty("baseURL");
+        driver.get(url);
     }
+
+    protected void isLoaded() throws Error { Assert.assertTrue(btn_Login.isDisplayed()); }
 }

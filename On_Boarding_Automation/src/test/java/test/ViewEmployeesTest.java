@@ -40,7 +40,13 @@ public class ViewEmployeesTest {
     }
 
     @After
-    public void tearDown(){
+    public void tearDown() throws InterruptedException {
+
+
+        viewEmployeesPage.goToLoginPage();
+
+        Assert.assertTrue("'Login' is not opened", loginPage.isOpened());
+
         driver.manage().deleteAllCookies();
         driver.quit();
     }
@@ -51,31 +57,25 @@ public class ViewEmployeesTest {
 
         loginPage = new LoginPage(driver).get();
 
-        Thread.sleep(2000);
 
         Assert.assertTrue("'Login' is not opened", loginPage.isOpened());
 
-        Thread.sleep(2000);
 
         loginPage.fillFormsLogin(adminEmail,adminPassword);
 
-        Thread.sleep(2000);
 
         adminHomePage = loginPage.pressLogInForAdmin();
 
-        Thread.sleep(2000);
 
         Assert.assertTrue("'Admin home' is not opened", adminHomePage.isOpened());
 
-        Thread.sleep(2000);
 
         viewEmployeesPage = adminHomePage.goToEmployees();
 
-        Thread.sleep(2000);
 
         Assert.assertTrue("'View employees' is not opened", viewEmployeesPage.isOpened());
 
-        Thread.sleep(2000);
+
     }
 
     @Test
@@ -96,11 +96,9 @@ public class ViewEmployeesTest {
         List<String> actual = dbConnection.getDbInfo(query, column);
         Assert.assertTrue("User not found", actual.size()>0);
 
-        Thread.sleep(2000);
 
         viewEmployeesPage.archiveEmployee();
 
-        Thread.sleep(2000);
 
         query = "select concat(first_name, concat(' ', last_name)) FROM employees WHERE archived=true;";
         column = "concat";
